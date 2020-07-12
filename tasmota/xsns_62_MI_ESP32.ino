@@ -125,11 +125,7 @@ struct mi_sensor_t{
   uint8_t type; //Flora = 1; MI-HT_V1=2; LYWSD02=3; LYWSD03=4; CGG1=5; CGD1=6
   uint8_t serial[6];
   uint8_t showedUp;
-<<<<<<< Updated upstream
-=======
   uint32_t showedLastTime;
-  int rssi;
->>>>>>> Stashed changes
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
   union {
     struct {
@@ -1198,11 +1194,7 @@ bool MI32Cmd(void) {
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
 const char HTTP_MI32_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
-<<<<<<< Updated upstream
-=======
 const char HTTP_OFFLINE[] PROGMEM = "{s}OFFLINE since" "{m}%d seconds{e}";
-const char HTTP_RSSI[] PROGMEM = "{s}%s" " RSSI" "{m}%d dBm{e}";
->>>>>>> Stashed changes
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
 const char HTTP_VOLTAGE[] PROGMEM = "{s}%s " D_VOLTAGE "{m}%s V{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
