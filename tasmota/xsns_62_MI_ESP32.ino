@@ -125,6 +125,11 @@ struct mi_sensor_t{
   uint8_t type; //Flora = 1; MI-HT_V1=2; LYWSD02=3; LYWSD03=4; CGG1=5; CGD1=6
   uint8_t serial[6];
   uint8_t showedUp;
+<<<<<<< Updated upstream
+=======
+  uint32_t showedLastTime;
+  int rssi;
+>>>>>>> Stashed changes
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
   union {
     struct {
@@ -156,6 +161,8 @@ BLEScanResults MI32foundDevices;
 const char S_JSON_MI32_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_MI32 "%s\":%d}";
 const char S_JSON_MI32_COMMAND[] PROGMEM        = "{\"" D_CMND_MI32 "%s%s\"}";
 const char kMI32_Commands[] PROGMEM             = "Period|Time|Page|Battery|Unit";
+
+#define MAX_SEC_TO_OFFLINE 300
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -327,6 +334,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
       if(MIBLEsensors[i].showedUp < 3){ // if we got an intact packet, the sensor should show up several times
         MIBLEsensors[i].showedUp++;     // count up to the above number ... now we are pretty sure
       }
+      MIBLEsensors[i].showedLastTime=UtcTime();
       return i;
     }
     DEBUG_SENSOR_LOG(PSTR("%s: i: %x %x %x %x %x %x"),D_CMND_MI32, MIBLEsensors[i].serial[5], MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[0]);
@@ -337,6 +345,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
   memcpy(_newSensor.serial,_serial, sizeof(_serial));
   _newSensor.type = _type;
   _newSensor.showedUp = 255;
+  _newSensor.showedLastTime=UtcTime();
   _newSensor.temp =NAN;
   _newSensor.bat=0x00;
   switch (_type)
@@ -1189,6 +1198,11 @@ bool MI32Cmd(void) {
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
 const char HTTP_MI32_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
+<<<<<<< Updated upstream
+=======
+const char HTTP_OFFLINE[] PROGMEM = "{s}OFFLINE since" "{m}%d seconds{e}";
+const char HTTP_RSSI[] PROGMEM = "{s}%s" " RSSI" "{m}%d dBm{e}";
+>>>>>>> Stashed changes
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
 const char HTTP_VOLTAGE[] PROGMEM = "{s}%s " D_VOLTAGE "{m}%s V{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
@@ -1199,6 +1213,11 @@ void MI32Show(bool json)
 
   if (json) {
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
+      if(MIBLEsensors[i].showedLastTime + MAX_SEC_TO_OFFLINE < UtcTime()){
+        // int since = UtcTime() - MIBLEsensors[i].showedLastTime;
+        // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: ignore sensor[%d] because no new data since %d seconds"),D_CMND_MI32,i,since);
+        continue;
+      }
 /*
       char slave[33];
       snprintf_P(slave, sizeof(slave), PSTR("%s-%02x%02x%02x"),
@@ -1262,6 +1281,11 @@ void MI32Show(bool json)
       WSContentSend_PD(HTTP_MI32, i+1,stemp,MIBLEsensors.size());
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_MI32_HL);
+        if(MIBLEsensors[i].showedLastTime + MAX_SEC_TO_OFFLINE < UtcTime()){
+          int since = UtcTime() - MIBLEsensors[i].showedLastTime;
+          WSContentSend_PD(HTTP_OFFLINE, since);
+          AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: ignore sensor[%d] because no new data since %d seconds"),D_CMND_MI32,i,since);
+        }
         WSContentSend_PD(HTTP_MI32_SERIAL, kMI32SlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
